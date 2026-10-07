@@ -11,6 +11,7 @@ import {
   validSlug,
   validUrl,
   dayInTz,
+  sharedDomains,
 } from './lib';
 import { login, logout, requireAuth, isAuthed } from './auth';
 import { getAnalytics, exportCsv, type AnalyticsQuery } from './analytics';
@@ -43,6 +44,8 @@ interface LinkInput {
   qr?: boolean;
   qrDesign?: Record<string, unknown> | null;
   archived?: boolean;
+  /** Create the slug even if it covers an existing page on a shared domain. */
+  force?: boolean;
 }
 
 function cleanTags(t: unknown): string[] {
@@ -124,6 +127,30 @@ async function freeSlug(env: Env, domain: string): Promise<string> {
   throw new Error('Could not allocate a slug');
 }
 
+/**
+ * On a shared domain, a back-half takes over that path on the existing site.
+ * If the site already answers there, ask the user to confirm (force: true).
+ */
+async function shadowsPage(env: Env, domain: string, slug: string, force?: boolean) {
+  if (force || !sharedDomains(env).has(domain)) return null;
+  try {
+    const res = await fetch(`https://${domain}/${slug}`, {
+      method: 'GET',
+      redirect: 'manual',
+      headers: { 'user-agent': 'SeeLinks-path-check' },
+      signal: AbortSignal.timeout(4000),
+    });
+    res.body?.cancel();
+    if (res.status === 404 || res.status === 410) return null;
+    return {
+      error: `${domain}/${slug} already shows a page on your site (HTTP ${res.status}). The short link would replace it for everyone.`,
+      code: 'shadows_page',
+    };
+  } catch {
+    return null; // site unreachable: nothing to shadow
+  }
+}
+
 async function slugTaken(env: Env, domain: string, slug: string, exceptLinkId?: string) {
   const row = await env.DB.prepare('SELECT link_id FROM slugs WHERE domain = ? AND slug = ?')
     .bind(domain, slug)
@@ -144,6 +171,8 @@ api.post('/links', async (c) => {
   if (slug) {
     if (!validSlug(slug)) return c.json({ error: 'Back-half may use letters, numbers, - and _ (max 64), and can’t be a reserved word' }, 400);
     if (await slugTaken(c.env, domain, slug)) return c.json({ error: `${domain}/${slug} is already taken` }, 409);
+    const shadow = await shadowsPage(c.env, domain, slug, body.force);
+    if (shadow) return c.json(shadow, 409);
   } else {
     slug = await freeSlug(c.env, domain);
   }
@@ -234,6 +263,8 @@ api.patch('/links/:id', async (c) => {
     const slug = body.slug.trim();
     if (!validSlug(slug)) return c.json({ error: 'Back-half may use letters, numbers, - and _ (max 64)' }, 400);
     if (await slugTaken(c.env, row.domain, slug, id)) return c.json({ error: `${row.domain}/${slug} is already taken` }, 409);
+    const shadow = await shadowsPage(c.env, row.domain, slug, body.force);
+    if (shadow) return c.json(shadow, 409);
     set('slug', slug);
     extra.push(
       c.env.DB.prepare(`UPDATE slugs SET slug = ? WHERE domain = ? AND link_id = ? AND channel = 'link'`).bind(slug, row.domain, id),

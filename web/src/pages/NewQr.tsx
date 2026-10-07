@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, type QrDesign } from '../api';
+import { api, withShadowConfirm, type QrDesign } from '../api';
 import { AdvancedSettings, ShortLinkField, advancedPayload, emptyAdvanced, normalizeUrl, useConfig } from '../editors';
 import { ILink } from '../icons';
 import { DEFAULT_DESIGN } from '../qr';
@@ -41,7 +41,8 @@ export function NewQr() {
     setBusy(true);
     setErr(null);
     try {
-      const link = await api.create({
+      const link = await withShadowConfirm((force) => api.create({
+        force,
         destination: normalizeUrl(destination),
         domain,
         slug: shareLink && slug.trim() ? slug.trim() : undefined,
@@ -51,7 +52,7 @@ export function NewQr() {
         showLink: shareLink,
         qrDesign: design,
         ...advancedPayload(adv),
-      });
+      }));
       toast('QR code created');
       navigate(`/qrs/${link.id}`, true);
     } catch (e) {

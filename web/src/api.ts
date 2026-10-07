@@ -74,8 +74,23 @@ export interface Config {
 }
 
 export class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  constructor(public status: number, message: string, public code?: string) {
     super(message);
+  }
+}
+
+/**
+ * Run a create/update; if the server says the back-half would cover an existing
+ * page on a shared domain, confirm with the user and retry with force.
+ */
+export async function withShadowConfirm<T>(run: (force: boolean) => Promise<T>): Promise<T> {
+  try {
+    return await run(false);
+  } catch (e) {
+    if (e instanceof ApiError && e.code === 'shadows_page' && confirm(`${e.message}\n\nUse this back-half anyway?`)) {
+      return run(true);
+    }
+    throw e;
   }
 }
 
@@ -88,7 +103,7 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
   });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && path !== '/login') window.dispatchEvent(new Event('sl:unauthorized'));
-  if (!res.ok) throw new ApiError(res.status, (data as { error?: string }).error || `Request failed (${res.status})`);
+  if (!res.ok) throw new ApiError(res.status, (data as { error?: string }).error || `Request failed (${res.status})`, (data as { code?: string }).code);
   return data as T;
 }
 
@@ -102,9 +117,9 @@ export const api = {
     return req<{ links: Link[] }>('GET', `/links${qs ? `?${qs}` : ''}`).then((r) => r.links);
   },
   link: (id: string) => req<{ link: Link }>('GET', `/links/${id}`).then((r) => r.link),
-  create: (body: Partial<Link> & { qr?: boolean; slug?: string }) =>
+  create: (body: Partial<Link> & { qr?: boolean; slug?: string; force?: boolean }) =>
     req<{ link: Link }>('POST', '/links', body).then((r) => r.link),
-  update: (id: string, body: Partial<Link> & { qr?: boolean }) =>
+  update: (id: string, body: Partial<Link> & { qr?: boolean; force?: boolean }) =>
     req<{ link: Link }>('PATCH', `/links/${id}`, body).then((r) => r.link),
   remove: (id: string) => req<{ ok: true }>('DELETE', `/links/${id}`),
   tags: () => req<{ tags: string[] }>('GET', '/tags').then((r) => r.tags),

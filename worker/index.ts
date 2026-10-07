@@ -1,9 +1,39 @@
 import { Hono } from 'hono';
-import { type Env, domains } from './lib';
+import { type Env, RESERVED, domains, sharedDomains } from './lib';
 import { api } from './api';
 import { handleRedirect, notFoundPage } from './redirect';
 
 const app = new Hono<{ Bindings: Env }>();
+
+/*
+ * Shared domains (e.g. play3.io) already host a website. The Worker runs on
+ * `play3.io/*` but only answers for single-segment paths that are registered
+ * short links; everything else (pages, assets, /, /admin, /api) goes untouched
+ * to the original site. A same-zone fetch() from a Worker skips the Worker and
+ * reaches the origin, so there is no loop.
+ */
+const MISS_TTL = 60_000;
+const recentMisses = new Map<string, number>(); // per-isolate negative cache, saves D1 reads on normal page views
+
+app.use('*', async (c, next) => {
+  const url = new URL(c.req.url);
+  const host = url.hostname.toLowerCase();
+  if (!sharedDomains(c.env).has(host)) return next();
+
+  const passthrough = () => fetch(c.req.raw);
+  const m = url.pathname.match(/^\/([A-Za-z0-9][A-Za-z0-9_-]{0,63})\/?$/);
+  if (!m || !['GET', 'HEAD'].includes(c.req.method) || RESERVED.has(m[1].toLowerCase())) return passthrough();
+
+  const key = `${host}/${m[1]}`;
+  const missAt = recentMisses.get(key);
+  if (missAt && Date.now() - missAt < MISS_TTL) return passthrough();
+
+  return handleRedirect(c.req.raw, c.env, c.executionCtx as ExecutionContext, host, m[1], () => {
+    if (recentMisses.size > 5000) recentMisses.clear();
+    recentMisses.set(key, Date.now());
+    return passthrough();
+  });
+});
 
 app.route('/api', api);
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api';
+import { api, withShadowConfirm } from '../api';
 import { AdvancedSettings, ShortLinkField, advancedPayload, emptyAdvanced, normalizeUrl, useConfig } from '../editors';
 import { IQr } from '../icons';
 import { navigate, A } from '../router';
@@ -34,7 +34,8 @@ export function NewLink() {
     setErr(null);
     setBusy(true);
     try {
-      const link = await api.create({
+      const link = await withShadowConfirm((force) => api.create({
+        force,
         destination: normalizeUrl(destination),
         domain,
         slug: slug.trim() || undefined,
@@ -42,7 +43,7 @@ export function NewLink() {
         tags,
         qr,
         ...advancedPayload(adv),
-      });
+      }));
       toast('Link created');
       navigate(`/links/${link.id}`, true);
     } catch (e) {

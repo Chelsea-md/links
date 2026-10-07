@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, type Link, type QrDesign } from '../api';
+import { api, withShadowConfirm, type Link, type QrDesign } from '../api';
 import { AnalyticsPanel } from '../AnalyticsPanel';
 import { AdvancedSettings, advancedFromLink, advancedPayload, normalizeUrl } from '../editors';
 import { copy, countryName, dateTime, stripProto } from '../format';
@@ -250,7 +250,7 @@ function EditModal({ link, onClose, onSaved }: { link: Link; onClose: () => void
     setBusy(true);
     setErr(null);
     try {
-      onSaved(await api.update(link.id, { destination: normalizeUrl(destination), title: title || null, slug, tags, ...advancedPayload(adv) }));
+      onSaved(await withShadowConfirm((force) => api.update(link.id, { force, destination: normalizeUrl(destination), title: title || null, slug, tags, ...advancedPayload(adv) })));
     } catch (e) {
       setErr((e as Error).message);
       setBusy(false);

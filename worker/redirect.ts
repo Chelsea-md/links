@@ -45,6 +45,8 @@ export async function handleRedirect(
   ctx: ExecutionContext,
   domain: string,
   slug: string,
+  /** Shared domains pass unknown paths through to the existing website instead of a 404. */
+  onMiss: () => Response | Promise<Response> = notFoundPage,
 ): Promise<Response> {
   const hit = await env.DB.prepare(
     `SELECT l.*, s.channel AS _channel FROM slugs s JOIN links l ON l.id = s.link_id
@@ -53,7 +55,7 @@ export async function handleRedirect(
     .bind(domain, slug)
     .first<LinkRow & { _channel: 'link' | 'qr' }>();
 
-  if (!hit || hit.archived) return notFoundPage();
+  if (!hit || hit.archived) return onMiss();
 
   const ua = req.headers.get('user-agent') || '';
   const info = classifyUA(ua);

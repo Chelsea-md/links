@@ -26,6 +26,11 @@
     // Leave empty to use the Worker's own address (see-links.<you>.workers.dev).
     // Each custom domain must also be listed under "routes" below.
     "DOMAINS": "",
+    // Domains from DOMAINS that already host a website (e.g. "play3.io").
+    // The Worker sits in front: registered back-halves (play3.io/1) are tracked
+    // and redirected, every other path goes to the existing site unchanged.
+    // Route them with { "pattern": "play3.io/*", "zone_name": "play3.io" } (not custom_domain).
+    "SHARED_DOMAINS": "",
     // Timezone used to bucket clicks into days on charts.
     "TZ": "Asia/Seoul",
     // Where to send visitors who open the bare domain (empty = the dashboard).

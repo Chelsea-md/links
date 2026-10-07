@@ -52,6 +52,8 @@ npx wrangler secret put SESSION_SECRET    # any long random string
 
 Open `https://go.yourdomain.com/admin` and log in.
 
+**Using a domain that already has a website (e.g. `play3.io/1` → `play3.io/notice`):** add it to both `DOMAINS` and `SHARED_DOMAINS`, and route it with `{ "pattern": "play3.io/*", "zone_name": "play3.io" }` instead of `custom_domain`. The domain's DNS must be on Cloudflare and proxied (orange cloud). The Worker then answers only for registered back-halves; every other path, including `/`, `/admin` and `/api`, goes to your site untouched, so the dashboard stays on the workers.dev address. Before creating a back-half the dashboard checks whether that path is already a page on your site and asks before covering it.
+
 **Adding another domain later:** add it to `DOMAINS` and to `routes`, then `npm run deploy`. Links are created per domain, and each domain has its own back-half namespace.
 
 ## Local development

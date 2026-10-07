@@ -2,6 +2,8 @@ export interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
   DOMAINS: string;
+  /** Domains (from DOMAINS) that also serve an existing website the Worker sits in front of. */
+  SHARED_DOMAINS?: string;
   TZ: string;
   ROOT_REDIRECT?: string;
   ADMIN_PASSWORD?: string;
@@ -52,6 +54,15 @@ export function domains(env: Env, reqUrl?: string): string[] {
     .filter(Boolean);
   if (list.length) return list;
   return [reqUrl ? new URL(reqUrl).hostname.toLowerCase() : 'localhost'];
+}
+
+export function sharedDomains(env: Env): Set<string> {
+  return new Set(
+    (env.SHARED_DOMAINS || '')
+      .split(',')
+      .map((d) => d.trim().toLowerCase())
+      .filter(Boolean),
+  );
 }
 
 export function parseJSON<T>(s: string | null | undefined, fallback: T): T {
