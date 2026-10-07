@@ -106,7 +106,7 @@ h3 { font-size: 16px; line-height: 1.3; }
 .field { display: block; margin-top: 18px; }
 .field:first-child { margin-top: 0; }
 .label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-.label .opt { font-weight: 400; color: var(--muted); }
+.label .optional { font-weight: 400; color: var(--muted); }
 .hint { font-size: 13px; color: var(--muted); margin-top: 6px; }
 .input, .select {
   width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--r-md);
@@ -310,3 +310,17 @@ kbd { font: 12px var(--font-ui); padding: 2px 7px; border: 1px solid var(--line)
   .item .favicon { display: none; }
   h1 { font-size: 24px; }
 }
+
+/* Short link field: domain prefix + back-half in one box */
+.short-field {
+  display: flex; align-items: center; height: 42px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: #fff; overflow: hidden;
+}
+.short-field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.short-prefix, .short-field select {
+  flex: none; max-width: 55%; padding: 0 4px 0 12px; color: var(--muted); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; border: 0; background: transparent; height: 100%;
+}
+.short-field select { padding-right: 8px; cursor: pointer; outline: none; }
+.short-slash { color: var(--faint); padding: 0 4px; }
+.short-field input { flex: 1; min-width: 80px; height: 100%; border: 0; outline: none; padding: 0 12px 0 2px; background: transparent; }

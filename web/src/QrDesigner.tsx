@@ -114,7 +114,7 @@ export function QrDesigner({ value, onChange }: { value: QrDesign; onChange: (d:
           </div>
           <div>
             <span className="label">
-              Gradient to <span className="opt">(optional)</span>
+              Gradient to <span className="optional">(optional)</span>
             </span>
             {d.color2 ? (
               <div style={{ display: 'flex', gap: 6 }}>

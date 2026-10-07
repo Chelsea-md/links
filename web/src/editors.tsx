@@ -96,7 +96,7 @@ export function AdvancedSettings({ value, onChange, noun = 'link' }: { value: Ad
           </label>
           <label>
             <span className="label">
-              After it expires, send to <span className="opt">(optional)</span>
+              After it expires, send to <span className="optional">(optional)</span>
             </span>
             <input className="input" placeholder="https://… (blank shows an “expired” page)" value={value.expiredUrl} onChange={(e) => set({ expiredUrl: e.target.value })} />
           </label>
@@ -175,4 +175,46 @@ export function normalizeUrl(u: string): string {
   const v = u.trim();
   if (!v) return v;
   return /^https?:\/\//i.test(v) ? v : `https://${v}`;
+}
+
+/**
+ * Short link = domain + back-half, shown as one field. With a single configured
+ * domain it's a fixed prefix; with several, the prefix becomes a picker.
+ */
+export function ShortLinkField({
+  domains,
+  domain,
+  onDomain,
+  slug,
+  onSlug,
+}: {
+  domains: string[];
+  domain: string;
+  onDomain: (d: string) => void;
+  slug: string;
+  onSlug: (s: string) => void;
+}) {
+  return (
+    <label style={{ display: 'block' }}>
+      <span className="label">
+        Short link <span className="optional">(leave the back-half empty for a random one)</span>
+      </span>
+      <div className="short-field">
+        {domains.length > 1 ? (
+          <select value={domain} onChange={(e) => onDomain(e.target.value)} aria-label="Domain">
+            {domains.map((d) => (<option key={d}>{d}</option>))}
+          </select>
+        ) : (
+          <span className="short-prefix">{domain}</span>
+        )}
+        <span className="short-slash">/</span>
+        <input
+          placeholder="back-half"
+          value={slug}
+          onChange={(e) => onSlug(e.target.value.replace(/\s/g, '-'))}
+          aria-label="Back-half"
+        />
+      </div>
+    </label>
+  );
 }

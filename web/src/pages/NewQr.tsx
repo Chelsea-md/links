@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, type QrDesign } from '../api';
-import { AdvancedSettings, advancedPayload, emptyAdvanced, normalizeUrl, useConfig } from '../editors';
+import { AdvancedSettings, ShortLinkField, advancedPayload, emptyAdvanced, normalizeUrl, useConfig } from '../editors';
 import { ILink } from '../icons';
 import { DEFAULT_DESIGN } from '../qr';
 import { QrDesigner, QrPreview } from '../QrDesigner';
@@ -79,12 +79,14 @@ export function NewQr() {
                   <span className="label">Destination URL</span>
                   <input className="input" autoFocus required placeholder="https://example.com/my-long-url" value={destination} onChange={(e) => setDestination(e.target.value)} />
                 </label>
-                <label className="field">
-                  <span className="label">Domain</span>
-                  <select className="select" value={domain} onChange={(e) => setDomain(e.target.value)} disabled={cfg.domains.length < 2}>
-                    {cfg.domains.map((d) => (<option key={d}>{d}</option>))}
-                  </select>
-                </label>
+                {cfg.domains.length > 1 && (
+                  <label className="field">
+                    <span className="label">Domain</span>
+                    <select className="select" value={domain} onChange={(e) => setDomain(e.target.value)}>
+                      {cfg.domains.map((d) => (<option key={d}>{d}</option>))}
+                    </select>
+                  </label>
+                )}
                 <div className="field">
                   <ToggleRow
                     icon={<ILink className="faint" />}
@@ -93,17 +95,11 @@ export function NewQr() {
                     checked={shareLink}
                     onChange={setShareLink}
                   >
-                    <label>
-                      <span className="label">Back-half <span className="opt">(optional)</span></span>
-                      <div className="row">
-                        <span className="muted" style={{ flex: 'none', paddingBottom: 10 }}>{domain}/</span>
-                        <input className="input" placeholder="auto" value={slug} onChange={(e) => setSlug(e.target.value.replace(/\s/g, '-'))} />
-                      </div>
-                    </label>
+                    <ShortLinkField domains={[domain]} domain={domain} onDomain={setDomain} slug={slug} onSlug={setSlug} />
                   </ToggleRow>
                 </div>
                 <label className="field">
-                  <span className="label">Title <span className="opt">(optional)</span></span>
+                  <span className="label">Title <span className="optional">(optional)</span></span>
                   <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
                 </label>
                 <div className="field">

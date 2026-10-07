@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import { AdvancedSettings, advancedPayload, emptyAdvanced, normalizeUrl, useConfig } from '../editors';
+import { AdvancedSettings, ShortLinkField, advancedPayload, emptyAdvanced, normalizeUrl, useConfig } from '../editors';
 import { IQr } from '../icons';
 import { navigate, A } from '../router';
 import { TagInput, ToggleRow, useToast } from '../ui';
@@ -71,22 +71,11 @@ export function NewLink() {
               onBlur={suggestTitle}
             />
           </label>
-          <div className="row field">
-            <label>
-              <span className="label">Domain</span>
-              <select className="select" value={domain} onChange={(e) => setDomain(e.target.value)} disabled={cfg.domains.length < 2}>
-                {cfg.domains.map((d) => (<option key={d}>{d}</option>))}
-              </select>
-            </label>
-            <span className="slash">/</span>
-            <label>
-              <span className="label">Back-half <span className="opt">(optional)</span></span>
-              <input className="input" placeholder="auto" value={slug} onChange={(e) => setSlug(e.target.value.replace(/\s/g, '-'))} />
-            </label>
+          <div className="field">
+            <ShortLinkField domains={cfg.domains} domain={domain} onDomain={setDomain} slug={slug} onSlug={setSlug} />
           </div>
-          <div className="hint">Leave the back-half empty to get a random 7-character one.</div>
           <label className="field">
-            <span className="label">Title <span className="opt">(optional)</span></span>
+            <span className="label">Title <span className="optional">(optional)</span></span>
             <input className="input" value={title} onChange={(e) => { setTitle(e.target.value); setTitleTouched(true); }} placeholder="Filled from the page title when possible" />
           </label>
           <div className="field">
