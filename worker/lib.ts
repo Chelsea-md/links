@@ -41,11 +41,17 @@ export interface LinkRow {
   updated_at: number;
 }
 
-export function domains(env: Env): string[] {
-  return (env.DOMAINS || 'localhost')
+/**
+ * Short-link domains. With DOMAINS empty (e.g. running on *.workers.dev with no
+ * custom domain yet) the host the request came in on is used.
+ */
+export function domains(env: Env, reqUrl?: string): string[] {
+  const list = (env.DOMAINS || '')
     .split(',')
     .map((d) => d.trim().toLowerCase())
     .filter(Boolean);
+  if (list.length) return list;
+  return [reqUrl ? new URL(reqUrl).hostname.toLowerCase() : 'localhost'];
 }
 
 export function parseJSON<T>(s: string | null | undefined, fallback: T): T {

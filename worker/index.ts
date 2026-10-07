@@ -25,7 +25,7 @@ app.get('/', (c) => c.redirect(c.env.ROOT_REDIRECT || '/admin/', 302));
 /** Map the incoming Host to one of the configured domains (falls back to the default, e.g. on localhost). */
 function domainFor(req: Request, env: Env): string {
   const host = new URL(req.url).hostname.toLowerCase();
-  const list = domains(env);
+  const list = domains(env, req.url);
   return list.includes(host) ? host : list[0];
 }
 

@@ -24,7 +24,7 @@ api.get('/me', async (c) => c.json({ authed: await isAuthed(c), passwordSet: !!c
 api.use('*', requireAuth);
 
 api.get('/config', (c) =>
-  c.json({ domains: domains(c.env), defaultDomain: domains(c.env)[0], tz: c.env.TZ || 'UTC' }),
+  c.json({ domains: domains(c.env, c.req.url), defaultDomain: domains(c.env, c.req.url)[0], tz: c.env.TZ || 'UTC' }),
 );
 
 // ---------- Links ----------
@@ -136,7 +136,7 @@ api.post('/links', async (c) => {
   const destination = (body.destination || '').trim();
   if (!validUrl(destination)) return c.json({ error: 'Enter a valid http(s) destination URL' }, 400);
 
-  const doms = domains(c.env);
+  const doms = domains(c.env, c.req.url);
   const domain = (body.domain || doms[0]).toLowerCase();
   if (!doms.includes(domain)) return c.json({ error: `Unknown domain: ${domain}` }, 400);
 

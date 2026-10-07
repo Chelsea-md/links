@@ -16,23 +16,25 @@
     {
       "binding": "DB",
       "database_name": "see-links",
-      // Replace with the id printed by `npx wrangler d1 create see-links`
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // No database_id: Wrangler creates the database on the first deploy.
       "migrations_dir": "migrations"
     }
   ],
 
   "vars": {
-    // Comma-separated short-link domains you own. The first one is the default.
-    // Each must also be attached to this Worker as a Custom Domain (see "routes" below).
-    "DOMAINS": "go.example.com",
+    // Comma-separated short-link domains you own; the first one is the default.
+    // Leave empty to use the Worker's own address (see-links.<you>.workers.dev).
+    // Each custom domain must also be listed under "routes" below.
+    "DOMAINS": "",
     // Timezone used to bucket clicks into days on charts.
     "TZ": "Asia/Seoul",
     // Where to send visitors who open the bare domain (empty = the dashboard).
     "ROOT_REDIRECT": ""
   },
 
-  // Uncomment and edit once your domain is on Cloudflare:
+  "workers_dev": true,
+
+  // Uncomment and edit once you have a domain on Cloudflare:
   // "routes": [
   //   { "pattern": "go.example.com", "custom_domain": true }
   // ],
