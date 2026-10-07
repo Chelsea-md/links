@@ -22,26 +22,32 @@ go.yourdomain.com/admin    →  dashboard (password protected)
 
 ## Deploy (about 10 minutes)
 
-You need a Cloudflare account and a domain whose DNS is on Cloudflare (a subdomain like `go.yourdomain.com` works great).
+You need a Cloudflare account (the free plan is enough). A domain is optional: with `DOMAINS` left empty the service runs on `see-links.<your-subdomain>.workers.dev`, and you can add a custom domain later (a subdomain like `go.yourdomain.com` works great).
+
+**Easiest: deploy from GitHub.** In the Cloudflare dashboard go to Workers & Pages → Create → Import a repository, pick this repo, and set:
+
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy && npx wrangler d1 migrations apply see-links --remote`
+
+Then add `ADMIN_PASSWORD` and `SESSION_SECRET` as secrets under the Worker's Settings → Variables and Secrets. Every push to `main` redeploys.
+
+**Or from your terminal:**
 
 ```bash
 npm install
 npx wrangler login
 
-# 1. Create the database, then paste the printed database_id into wrangler.jsonc
-npx wrangler d1 create see-links
-npm run db:migrate:remote
-
-# 2. Set your domain(s) and timezone in wrangler.jsonc → "vars"
+# 1. (Optional) set your domain(s) and timezone in wrangler.jsonc → "vars"
 #    DOMAINS = "go.yourdomain.com"   (comma-separate several; the first is the default)
 #    and uncomment "routes" with the same domain(s), "custom_domain": true
+
+# 2. Ship it — the D1 database is created on the first deploy
+npm run deploy
+npm run db:migrate:remote
 
 # 3. Secrets
 npx wrangler secret put ADMIN_PASSWORD
 npx wrangler secret put SESSION_SECRET    # any long random string
-
-# 4. Ship it
-npm run deploy
 ```
 
 Open `https://go.yourdomain.com/admin` and log in.
