@@ -29,9 +29,12 @@ function domainFor(req: Request, env: Env): string {
   return list.includes(host) ? host : list[0];
 }
 
-app.on(['GET', 'HEAD'], '/:slug', (c) =>
-  handleRedirect(c.req.raw, c.env, c.executionCtx as ExecutionContext, domainFor(c.req.raw, c.env), c.req.param('slug')),
-);
+app.on(['GET', 'HEAD'], '/:slug', (c) => {
+  const slug = c.req.param('slug');
+  // Mistyped dashboard URLs (/Admin, /admin**, /admin.) go to the dashboard, not a 404.
+  if (/^admin\W*$/i.test(slug)) return c.redirect('/admin/', 302);
+  return handleRedirect(c.req.raw, c.env, c.executionCtx as ExecutionContext, domainFor(c.req.raw, c.env), slug);
+});
 
 app.notFound(() => notFoundPage());
 
